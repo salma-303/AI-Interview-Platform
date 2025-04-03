@@ -27,9 +27,17 @@ class JobCreate(BaseModel):
     brief: str
     # Requirements field, required, must be a string (list of job requirements)
     requirements: str
+    status: str = "Draft"  # Optional, defaults to "Draft"
+class JobUpdate(BaseModel):
+    title: Optional[str] = None
+    brief: Optional[str] = None
+    requirements: Optional[str] = None
+    status: Optional[str] = None  # All fields optional for update
 
+class ApplicantRequest(BaseModel):
+    user_id: str
 # Define a Pydantic model for updating a CV with processed data
 class CVUpdate(BaseModel):
-    # Processed_data field, optional, can be a dictionary or None
-    # Defaults to None if not provided; used for JSON-like CV data
+    applicant_id: Optional[str] = None
+    file_url: Optional[str] = None
     processed_data: Optional[dict] = None
