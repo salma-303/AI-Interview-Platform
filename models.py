@@ -1,7 +1,8 @@
 # Import BaseModel from Pydantic to create data validation models
-from pydantic import BaseModel
+from pydantic import BaseModel , EmailStr, validator
 # Import Optional from typing to allow fields to be either a type or None
-from typing import Optional
+from typing import Optional ,List, Dict
+import json
 
 # Define a Pydantic model for user sign-up data
 class UserSignUp(BaseModel):
@@ -36,8 +37,13 @@ class JobUpdate(BaseModel):
 
 class ApplicantRequest(BaseModel):
     user_id: str
+
+
+
+    
 # Define a Pydantic model for updating a CV with processed data
 class CVUpdate(BaseModel):
     applicant_id: Optional[str] = None
     file_url: Optional[str] = None
     processed_data: Optional[dict] = None
+    processing_status: Optional[str] = None

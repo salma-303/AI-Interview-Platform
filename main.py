@@ -1,11 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File ,WebSocket
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File ,WebSocket ,Body
 from fastapi.responses import JSONResponse
+import json
 from supabase import Client
 from database import supabase
-from models import UserSignUp, UserSignIn, JobCreate,JobUpdate,ApplicantRequest, CVUpdate
+from models import UserSignUp, UserSignIn, JobCreate,JobUpdate,ApplicantRequest, CVUpdate 
 from auth import get_current_user #, get_current_admin
 import os
-# from llm_test import process_cv  # Import LLM processing
+from cv import process_cv  # Import LLM processing
 
 app = FastAPI()
 
@@ -67,6 +68,9 @@ def signin(user: UserSignIn):
     
 @app.get("/users")
 def get_all_users(current_user: dict = Depends(get_current_user)):
+    # Retrieve a list of all users from the 'users' table.
+    # Requires authentication via get_current_user dependency to ensure only authorized users can access.
+    # Returns a list of user objects with id, email, and role fields.
     users = supabase.table("users").select("id, email, role").execute()
     return users.data
 
@@ -74,16 +78,21 @@ def get_all_users(current_user: dict = Depends(get_current_user)):
 # This section covers APIs for managing job postings, and status tracking.
 @app.post("/jobs")
 def add_job(job: JobCreate, current_user: dict = Depends(get_current_user)):
+    # Create a new job posting in the 'jobs' table.
+    # Expects a JobCreate object (Pydantic model) with fields like title, brief, and requirements.
+    # Requires authentication to ensure only authorized users (e.g., admins) can add jobs.
     job_data = supabase.table("jobs").insert(job.dict()).execute()
     return {"message": "Job added successfully", "job_id": job_data.data[0]["id"]}
 
 @app.get("/jobs")
 def get_all_jobs():
+    # Retrieve a list of all job postings from the 'jobs' table.
     jobs = supabase.table("jobs").select("*").execute()
     return jobs.data
 
 @app.get("/jobs/{job_id}")
 def get_job_details(job_id: str):
+    # Retrieve details of a specific job by its ID.
     job = supabase.table("jobs").select("*").eq("id", job_id).single().execute()
     if not job.data:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -91,11 +100,14 @@ def get_job_details(job_id: str):
 
 @app.delete("/jobs/{job_id}")
 def delete_job(job_id: str, current_user: dict = Depends(get_current_user)):
+    # Delete a specific job by its ID from the 'jobs' table.
     supabase.table("jobs").delete().eq("id", job_id).execute()
     return {"message": "Job deleted successfully"}
 
 @app.put("/jobs/{job_id}")
 def edit_job(job_id: str, job: JobUpdate, current_user: dict = Depends(get_current_user)):
+    # Update details of a specific job by its ID.
+    # Expects a JobUpdate object (Pydantic model) with optional fields to update (e.g., title, status).
     job_check = supabase.table("jobs").select("id").eq("id", job_id).execute()
     if not job_check.data:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -105,10 +117,12 @@ def edit_job(job_id: str, job: JobUpdate, current_user: dict = Depends(get_curre
     supabase.table("jobs").update(update_data).eq("id", job_id).execute()
     return {"message": "Job updated successfully"}
 
-########## Applicant Management ##################
+############# Applicant Management ##################
 
 @app.post("/jobs/{job_id}/applicants")
 def add_applicant(job_id: str, request: ApplicantRequest, current_user: dict = Depends(get_current_user)):
+    # Add an applicant to a specific job in the 'applicants' table.
+    # Expects an ApplicantRequest object with user_id to link a user to a job.
     if current_user["role"] != "admin" and current_user["id"] != request.user_id:
         raise HTTPException(status_code=403, detail="Not authorized")
     applicant_data = supabase.table("applicants").insert({
@@ -119,48 +133,71 @@ def add_applicant(job_id: str, request: ApplicantRequest, current_user: dict = D
 
 @app.delete("/jobs/{job_id}/applicants/{applicant_id}")
 def delete_applicant(job_id: str, applicant_id: str, current_user: dict = Depends(get_current_user)):
+    # Remove an applicant from a specific job in the 'applicants' table.
     supabase.table("applicants").delete().eq("id", applicant_id).eq("job_id", job_id).execute()
     return {"message": "Applicant deleted successfully"}
 
 @app.get("/applicants/{applicant_id}/history")
 def get_applicant_history(applicant_id: str, current_user: dict = Depends(get_current_user)):
+    # Retrieve the interview history for a specific applicant from the 'interviews' table.
     history = supabase.table("interviews").select("*").eq("applicant_id", applicant_id).execute()
     return history.data
 
 ######### CV Management ########
 
-async def add_cv(applicant_id: str, file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+@app.post("/applicants/{applicant_id}/cv")
+def add_cv_from_path(
+    applicant_id: str,
+    file_path: str = Body(..., embed=True),  # Accepts JSON body like {"file_path": "path/to/file.pdf"}
+    current_user: dict = Depends(get_current_user)
+):
+    # Upload and process a CV file for an applicant, storing it in Supabase Storage and metadata in 'cvs' table.
+    # Expects a JSON body with a 'file_path' field pointing to a local PDF file.
+    # Requires authentication to link the CV to an authorized applicant.
+    # Validate path
+    if not os.path.isfile(file_path) or not file_path.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Invalid PDF file path")
+
     try:
-        # Read PDF bytes
-        pdf_bytes = await file.read()
+        # Read file contents from disk
+        with open(file_path, "rb") as f:
+            file_contents = f.read()
+
+        # Process file (reuse your existing logic)
+        processed_data = process_cv(file_path, file_type="pdf")
+
+        # Generate unique file name and upload to Supabase
+        file_name = f"{applicant_id}_{os.urandom(8).hex()}.pdf"
+        remote_path = f"cvs/{file_name}"
+
+        supabase.storage.from_("cvs").upload(
+            remote_path, file_contents, file_options={"content-type": "application/pdf"}
+        )
+        file_url = supabase.storage.from_("cvs").get_public_url(remote_path)
         
-        # Upload to Supabase Storage
-        file_name = f"{applicant_id}_{file.filename}"
-        file_path = f"cvs/{file_name}"
-        supabase.storage.from_("cvs").upload(file_path, pdf_bytes, file_options={"content-type": "application/pdf"})
-        file_url = supabase.storage.from_("cvs").get_public_url(file_path)
-        
-        # Process PDF with LLM
-        processed_data = process_cv(file)
-        
-        # Insert into cvs table
+        # Save metadata to DB
         cv_data = supabase.table("cvs").insert({
             "applicant_id": applicant_id,
-            "file_path": file_url,
+            "file_path": str(file_url),
             "processed_data": processed_data
         }).execute()
-        
+
         return {
-            "message": "CV uploaded successfully",
+            "message": "CV uploaded successfully from path",
             "cv_id": cv_data.data[0]["id"],
             "file_path": file_url,
             "processed_data": processed_data
         }
+
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Failed to parse CV data")
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to upload or process CV")
+        raise HTTPException(status_code=500, detail=f"Error processing CV: {str(e)}")
+
 
 @app.delete("/applicants/{applicant_id}/cv/{cv_id}")
 def delete_cv(applicant_id: str, cv_id: str, current_user: dict = Depends(get_current_user)):
+    # Delete a specific CV by its ID, removing it from both Supabase Storage and the 'cvs' table.
     try:
         cv = supabase.table("cvs").select("file_path").eq("id", cv_id).single().execute()
         if not cv.data:
@@ -176,6 +213,7 @@ def delete_cv(applicant_id: str, cv_id: str, current_user: dict = Depends(get_cu
 
 @app.put("/applicants/{applicant_id}/cv/{cv_id}")
 def edit_cv(applicant_id: str, cv_id: str, cv_update: CVUpdate, current_user: dict = Depends(get_current_user)):
+    # Update details of a specific CV by its ID in the 'cvs' table.
     try:
         cv = supabase.table("cvs").select("id").eq("id", cv_id).single().execute()
         if not cv.data:
@@ -195,11 +233,13 @@ def edit_cv(applicant_id: str, cv_id: str, cv_update: CVUpdate, current_user: di
 
 @app.post("/applicants/{applicant_id}/interviews")
 def add_interview(applicant_id: str, job_id: str, current_user: dict = Depends(get_current_user)):
+    # Schedule a new interview for an applicant and job in the 'interviews' table.
     interview_data = supabase.table("interviews").insert({"applicant_id": applicant_id, "job_id": job_id}).execute()
     return {"message": "Interview scheduled", "interview_id": interview_data.data[0]["id"]}
 
 @app.get("/interviews/{interview_id}")
 def get_interview_details(interview_id: str, current_user: dict = Depends(get_current_user)):
+    # Retrieve details of a specific interview by its ID from the 'interviews' table.
     interview = supabase.table("interviews").select("*").eq("id", interview_id).single().execute()
     if not interview.data:
         raise HTTPException(status_code=404, detail="Interview not found")
@@ -207,6 +247,7 @@ def get_interview_details(interview_id: str, current_user: dict = Depends(get_cu
 
 @app.get("/applicants/{applicant_id}/interviews/results")
 def get_interview_results(applicant_id: str, current_user: dict = Depends(get_current_user)):
+    # Retrieve interview results for a specific applicant from the 'interviews' table.
     results = supabase.table("interviews").select("results").eq("applicant_id", applicant_id).execute()
     return results.data
 
