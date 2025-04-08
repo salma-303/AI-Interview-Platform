@@ -7,7 +7,7 @@ from models import UserSignUp, UserSignIn, JobCreate,JobUpdate,ApplicantRequest,
 from auth import get_current_user #, get_current_admin
 import os
 from cv import process_cv  # Import LLM processing
-
+from interview_manager import transcribe_audio_local, process_response_with_gemini
 app = FastAPI()
 
 # Set up the FastAPI app with authentication endpoints
@@ -232,7 +232,7 @@ def edit_cv(applicant_id: str, cv_id: str, cv_update: CVUpdate, current_user: di
 ######## Interview Management #########
 
 @app.post("/applicants/{applicant_id}/interviews")
-def add_interview(applicant_id: str, job_id: str, current_user: dict = Depends(get_current_user)):
+def add_interview(applicant_id: str, job_id: str = Body(...), current_user: dict = Depends(get_current_user)):
     # Schedule a new interview for an applicant and job in the 'interviews' table.
     interview_data = supabase.table("interviews").insert({"applicant_id": applicant_id, "job_id": job_id}).execute()
     return {"message": "Interview scheduled", "interview_id": interview_data.data[0]["id"]}
@@ -251,7 +251,41 @@ def get_interview_results(applicant_id: str, current_user: dict = Depends(get_cu
     results = supabase.table("interviews").select("results").eq("applicant_id", applicant_id).execute()
     return results.data
 
-
+# test audio 
+@app.post("/interviews/{interview_id}/audio-test")
+async def test_interview_audio(
+    interview_id: str,
+    audio: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Test audio processing with Whisper and Gemini without saving to database."""
+    try:
+        # Save uploaded audio temporarily
+        audio_path = f"temp_{interview_id}_{audio.filename}"
+        with open(audio_path, "wb") as f:
+            f.write(await audio.read())
+        
+        # Transcribe audio using Whisper
+        transcribed_text = transcribe_audio_local(audio_path, model_size="base")
+        
+        # Process transcription with Gemini
+        ai_analysis = process_response_with_gemini(transcribed_text)
+        
+        # Clean up temporary file
+        os.remove(audio_path)
+        
+        return {
+            "message": "Audio processed successfully",
+            "interview_id": interview_id,
+            "transcription": transcribed_text,
+            "ai_analysis": ai_analysis
+        }
+    except Exception as e:
+        # Clean up in case of failure
+        if os.path.exists(audio_path):
+            os.remove(audio_path)
+        raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+    
 ###### TTS/STT and AI Agent Communication ######
 @app.websocket("/interview/{interview_id}")
 async def interview_websocket(websocket: WebSocket, interview_id: str, token: str = None):
