@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -7,14 +6,16 @@ interface User {
   id: string;
   email: string;
   name: string;
+  role: string; // Add role property
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, role: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  getUserRole: () => string | null; // Add getUserRole function
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,25 +43,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, []);
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, name: string, role: string) => {
     try {
-      // In a real app, you would make an API call to register
-      // For now, we'll simulate a successful registration
       setLoading(true);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newUser = { id: Date.now().toString(), email, name };
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+
+      const newUser = { id: Date.now().toString(), email, name, role };
       localStorage.setItem('user', JSON.stringify(newUser));
       setUser(newUser);
-      
+
       toast({
         title: "Registration successful",
         description: "Your account has been created.",
       });
-      
-      navigate('/dashboard');
+
+      navigate(role === "HR Recruiter" ? '/dashboard-hr' : '/dashboard');
     } catch (error) {
       toast({
         title: "Registration failed",
@@ -75,23 +72,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      // In a real app, you would make an API call to authenticate
-      // For now, we'll simulate a successful login
       setLoading(true);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockUser = { id: '1', email, name: email.split('@')[0] };
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+
+      // Mock user data
+      const mockUser = { id: '1', email, name: email.split('@')[0], role: email.includes("hr") ? "HR Recruiter" : "Employee" };
       localStorage.setItem('user', JSON.stringify(mockUser));
       setUser(mockUser);
-      
+
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
-      
-      navigate('/dashboard');
+
+      navigate(mockUser.role === "HR Recruiter" ? '/dashboard-hr' : '/dashboard');
     } catch (error) {
       toast({
         title: "Login failed",
@@ -114,8 +108,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const getUserRole = (): string | null => {
+    return user?.role || null; // Return the user's role or null if not logged in
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, register, login, logout, getUserRole }}>
       {children}
     </AuthContext.Provider>
   );

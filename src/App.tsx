@@ -8,10 +8,12 @@ import { AuthProvider } from "./contexts/AuthContext";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
+import HR_Dashboard from "./pages/Dashboard_HR";
 import UploadCV from "./pages/UploadCV";
 import Interview from "./pages/Interview";
 import Results from "./pages/Results";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Welcome from "./pages/Welcome";
 
 const queryClient = new QueryClient();
 
@@ -23,15 +25,16 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+        
+            <Route path="/" element={<Welcome />} />
+            {/*<Route path="/" element={<Navigate to="/login" replace />} />*/}
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<SignIn />} />
-            
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/upload-cv" element={<ProtectedRoute><UploadCV /></ProtectedRoute>} />
             <Route path="/interview" element={<ProtectedRoute><Interview /></ProtectedRoute>} />
             <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
-            
+            <Route path="/dashboard_hr" element={<ProtectedRoute><HR_Dashboard /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </AuthProvider>

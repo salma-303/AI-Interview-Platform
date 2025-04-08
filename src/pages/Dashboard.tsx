@@ -1,9 +1,8 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Video, FileText, CheckCircle, LogOut } from "lucide-react";
+import { Upload, Video, CheckCircle, LogOut } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
@@ -34,6 +33,29 @@ const Dashboard: React.FC = () => {
     }
   ];
 
+  const jobs = [
+    {
+      id: 1,
+      title: "Software Engineer",
+      brief: "Develop and maintain web applications.",
+      description: "We are looking for a Software Engineer to join our team. Responsibilities include developing and maintaining web applications, collaborating with cross-functional teams, and ensuring high performance and scalability."
+    },
+    {
+      id: 2,
+      title: "Data Scientist",
+      brief: "Analyze data to provide business insights.",
+      description: "As a Data Scientist, you will analyze large datasets to extract meaningful insights, build predictive models, and support data-driven decision-making processes."
+    },
+    {
+      id: 3,
+      title: "Product Manager",
+      brief: "Oversee product development lifecycle.",
+      description: "The Product Manager will oversee the product development lifecycle, define product requirements, and work closely with engineering and design teams to deliver high-quality products."
+    }
+  ];
+
+  const [selectedJob, setSelectedJob] = useState<number | null>(null);
+
   return (
     <div className="page-container">
       <div className="flex justify-between items-center mb-8">
@@ -47,7 +69,7 @@ const Dashboard: React.FC = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {dashboardItems.map((item, index) => (
           <Card key={index} className="h-full">
             <CardHeader>
@@ -68,6 +90,48 @@ const Dashboard: React.FC = () => {
           </Card>
         ))}
       </div>
+
+      {/* Job Browsing Section */}
+      <div className="job-browsing-section">
+  <h2 className="text-xl font-bold mb-4">Browse Jobs</h2>
+  <div className="grid grid-cols-1 gap-4">
+    {jobs.map(job => (
+      <Card key={job.id} className="cursor-pointer">
+        <CardHeader onClick={() => setSelectedJob(job.id)}>
+          <CardTitle>{job.title}</CardTitle>
+          <CardDescription>{job.brief}</CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button 
+            size="sm" 
+            className="ml-auto" 
+            onClick={() => navigate("/upload-cv")}
+          >
+            Apply
+          </Button>
+        </CardFooter>
+      </Card>
+    ))}
+  </div>
+
+  {selectedJob !== null && (
+    <div className="mt-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>{jobs.find(job => job.id === selectedJob)?.title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{jobs.find(job => job.id === selectedJob)?.description}</p>
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full" onClick={() => alert("Applied for the job!")}>
+            Apply
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  )}
+</div>
     </div>
   );
 };
