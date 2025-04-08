@@ -12,7 +12,7 @@ APPLICANT_ID = "7c1b15ce-32fe-4c1e-a7a1-21c95762ffd0"
 User_ID = "03c59878-dec6-42c9-8012-b0c707a4daef"
 CV_ID = "67d13e8d-a8da-429e-bf57-e87bb0c37df1"
 CV_UPDATE_DATA = {"processing_status": "completed"}
-
+INTERVIEW_ID = "f366428a-b867-415f-bc83-faa0f75c6e5c"
 
 def login_user():
     signin_url = f"{BASE_URL}/signin"
@@ -150,8 +150,7 @@ def delete_cv(token, applicant_id, cv_id):
 def add_interview(token, applicant_id, job_id):
     url = f"{BASE_URL}/applicants/{applicant_id}/interviews"
     headers = {"Content-Type": "application/json", "accept": "application/json", "Authorization": f"Bearer {token}"}
-    data = {"job_id": job_id}  # Only job_id in body since applicant_id is in URL
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    response = requests.post(url, headers=headers, data=json.dumps(job_id))
     if response.status_code == 200:
         print(f"Interview scheduled: {response.text}")
         return response.json()
@@ -181,6 +180,20 @@ def get_interview_results(token, applicant_id):
         print(f"Failed to get interview results: {response.text}")
         return None
 
+######### during interview interaction ##########
+def upload_audio(token, interview_id, audio_path):
+    """Upload the recorded audio file to the FastAPI backend for testing."""
+    url = f"{BASE_URL}/interviews/{interview_id}/audio-test"  # New test endpoint
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    with open(audio_path, "rb") as audio_file:
+        files = {"audio": (os.path.basename(audio_path), audio_file, "audio/wav")}
+        response = requests.post(url, headers=headers, files=files)
+    
+    if response.status_code == 200:
+        print(f"Audio processed successfully: {json.dumps(response.json(), indent=2)}")
+    else:
+        print(f"Failed to process audio: {response.text}")
 ##############################################################################
 
 if __name__ == "__main__":
@@ -201,5 +214,6 @@ if __name__ == "__main__":
         # get_all_users(token)
         # add_cv(token, APPLICANT_ID, "a-cv.pdf")
         #update_cv(token,APPLICANT_ID,CV_ID,CV_UPDATE_DATA)
-        delete_cv(token,APPLICANT_ID,CV_ID)
-        
+        #delete_cv(token,APPLICANT_ID,CV_ID)
+        #add_interview(token, APPLICANT_ID, JOB_ID)
+        upload_audio(token, INTERVIEW_ID, "interview_answer.mp3")
