@@ -6,7 +6,7 @@ from database import supabase
 from models import UserSignUp, UserSignIn, JobCreate,JobUpdate,ApplicantRequest, CVUpdate 
 from auth import get_current_user #, get_current_admin
 import os
-from cv import process_cv  # Import LLM processing
+from cv import process_cv , generate_interview_questions # Import cv processing functions
 from interview_manager import transcribe_audio_local, process_response_with_gemini
 app = FastAPI()
 
@@ -166,6 +166,21 @@ def add_cv_from_path(
         # Process file (reuse your existing logic)
         processed_data = process_cv(file_path, file_type="pdf")
 
+        # Fetch job title from applicants and jobs tables
+        applicant = supabase.table("applicants").select("job_id").eq("id", applicant_id).execute()
+        if not applicant.data:
+            raise HTTPException(status_code=404, detail="Applicant not found")
+        
+        job_id = applicant.data[0]["job_id"]
+        job = supabase.table("jobs").select("title").eq("id", job_id).execute()
+        if not job.data:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        job_title = job.data[0]["title"]
+
+        # Generate interview questions
+        interview_questions = generate_interview_questions(processed_data, job_title=job_title)
+
         # Generate unique file name and upload to Supabase
         file_name = f"{applicant_id}_{os.urandom(8).hex()}.pdf"
         remote_path = f"cvs/{file_name}"
@@ -179,14 +194,16 @@ def add_cv_from_path(
         cv_data = supabase.table("cvs").insert({
             "applicant_id": applicant_id,
             "file_path": str(file_url),
-            "processed_data": processed_data
+            "processed_data": processed_data,
+            "interview_questions": interview_questions  # Store questions in JSONB column
         }).execute()
 
         return {
             "message": "CV uploaded successfully from path",
             "cv_id": cv_data.data[0]["id"],
             "file_path": file_url,
-            "processed_data": processed_data
+            "processed_data": processed_data ,
+            "interview_questions": interview_questions
         }
 
     except json.JSONDecodeError:
