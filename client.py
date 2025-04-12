@@ -209,11 +209,11 @@ if __name__ == "__main__":
         #interview_response = add_interview(token, APPLICANT_ID, JOB_ID)
         #if interview_response:
         #    interview_id = interview_response["interview_id"]
-        #    get_interview_details(token, interview_id)
+        get_interview_details(token, INTERVIEW_ID)
         #get_interview_results(token, APPLICANT_ID)
         # get_all_users(token)
-        # add_cv(token, APPLICANT_ID, "a-cv.pdf")
+        #add_cv(token, APPLICANT_ID, "a-cv.pdf")
         #update_cv(token,APPLICANT_ID,CV_ID,CV_UPDATE_DATA)
         #delete_cv(token,APPLICANT_ID,CV_ID)
         #add_interview(token, APPLICANT_ID, JOB_ID)
-        upload_audio(token, INTERVIEW_ID, "interview_answer.mp3")
+        # upload_audio(token, INTERVIEW_ID, "interview_answer.mp3")

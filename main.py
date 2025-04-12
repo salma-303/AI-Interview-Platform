@@ -260,7 +260,22 @@ def get_interview_details(interview_id: str, current_user: dict = Depends(get_cu
     interview = supabase.table("interviews").select("*").eq("id", interview_id).single().execute()
     if not interview.data:
         raise HTTPException(status_code=404, detail="Interview not found")
-    return interview.data
+    job = supabase.table("jobs").select("title, brief").eq("id", interview.data["job_id"]).single().execute()
+    # Retrieve applicant details
+    applicant = supabase.table("applicants").select("user_id").eq("id", interview.data["applicant_id"]).maybe_single().execute()
+    if not applicant.data:
+        raise HTTPException(status_code=404, detail="Applicant not found")
+
+    # Retrieve user email
+    user = supabase.table("users").select("email").eq("id", applicant.data["user_id"]).maybe_single().execute()
+    if not user.data:
+        raise HTTPException(status_code=404, detail="User not found")    
+    return {
+        "interview_id": interview.data["id"],
+        "job": job.data,
+        "applicant_email": user.data["email"],
+        "results": interview.data["results"]
+    }
 
 @app.get("/applicants/{applicant_id}/interviews/results")
 def get_interview_results(applicant_id: str, current_user: dict = Depends(get_current_user)):
