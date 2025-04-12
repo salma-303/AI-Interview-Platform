@@ -55,9 +55,53 @@ def process_cv(file_path, file_type="pdf"):
     return parsed_data
 
 
+# Generate interview questions based on processed CV
+def generate_interview_questions(cv_data, job_title="software developer"):
+    """
+    Generate customized interview questions based on parsed CV data.
+    
+    Args:
+        cv_data (dict): Parsed CV data with keys: name, skills, education
+        job_title (str): Target job title (default: software developer)
+    
+    Returns:
+        list: List of interview questions as strings
+    """
+    name = cv_data.get("name", "the candidate")
+    skills = ", ".join(cv_data.get("skills", [])) if isinstance(cv_data.get("skills"), list) else cv_data.get("skills", "")
+    education = json.dumps(cv_data.get("education", [])) if isinstance(cv_data.get("education"), list) else cv_data.get("education", "")
+
+    prompt = f"""
+    You are an AI interviewer.
+
+    Based on the candidate's name: {name},
+    skills: {skills},
+    and education: {education},
+    
+    generate 5 customized interview questions tailored for a {job_title} role.
+
+    Focus on:
+    - practical coding skills
+    - data structures
+    - problem solving
+    - tools or libraries mentioned in the CV
+
+    Return the questions as a JSON array of strings, e.g., ["question 1", "question 2", ...].
+    """
+    try:
+        response = model.generate_content(prompt)
+        # Clean and parse the response to ensure valid JSON
+        cleaned_text = re.sub(r"(?s)^.*?(\[.*\]).*$", r"\1", response.text.strip())
+        questions = json.loads(cleaned_text)
+        if not isinstance(questions, list):
+            raise ValueError("Expected a list of questions")
+        return questions
+    except (json.JSONDecodeError, ValueError) as e:
+        raise ValueError(f"Failed to generate questions: {str(e)}\nRaw response: {response.text}")
 
 # Example usage
 #cv_data = process_cv("a-cv.pdf", file_type="pdf")
 #print(cv_data)
-
+#questions = generate_interview_questions(cv_data)
+#print(questions)
 
