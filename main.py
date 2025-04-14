@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File ,WebSocket ,Body
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File ,WebSocket ,Body , WebSocketDisconnect
 from fastapi.responses import JSONResponse
 import json
 from supabase import Client
@@ -7,7 +7,12 @@ from models import UserSignUp, UserSignIn, JobCreate,JobUpdate,ApplicantRequest,
 from auth import get_current_user #, get_current_admin
 import os
 from cv import process_cv , generate_interview_questions # Import cv processing functions
-from interview_manager import transcribe_audio_local, process_response_with_gemini
+from interview_agent import InterviewAgent
+import asyncio
+import base64
+import os
+from gtts import gTTS
+
 app = FastAPI()
 
 # Set up the FastAPI app with authentication endpoints
@@ -283,69 +288,53 @@ def get_interview_results(applicant_id: str, current_user: dict = Depends(get_cu
     results = supabase.table("interviews").select("results").eq("applicant_id", applicant_id).execute()
     return results.data
 
-# test audio 
-@app.post("/interviews/{interview_id}/audio-test")
-async def test_interview_audio(
-    interview_id: str,
-    audio: UploadFile = File(...),
-    current_user: dict = Depends(get_current_user)
-):
-    """Test audio processing with Whisper and Gemini without saving to database."""
-    try:
-        # Save uploaded audio temporarily
-        audio_path = f"temp_{interview_id}_{audio.filename}"
-        with open(audio_path, "wb") as f:
-            f.write(await audio.read())
-        
-        # Transcribe audio using Whisper
-        transcribed_text = transcribe_audio_local(audio_path, model_size="base")
-        
-        # Process transcription with Gemini
-        ai_analysis = process_response_with_gemini(transcribed_text)
-        
-        # Clean up temporary file
-        os.remove(audio_path)
-        
-        return {
-            "message": "Audio processed successfully",
-            "interview_id": interview_id,
-            "transcription": transcribed_text,
-            "ai_analysis": ai_analysis
-        }
-    except Exception as e:
-        # Clean up in case of failure
-        if os.path.exists(audio_path):
-            os.remove(audio_path)
-        raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+
     
 ###### TTS/STT and AI Agent Communication ######
-@app.websocket("/interview/{interview_id}")
-async def interview_websocket(websocket: WebSocket, interview_id: str, token: str = None):
-    # Accept connection
+@app.websocket("/interviews/{interview_id}/live")
+async def live_interview(websocket: WebSocket, interview_id: str):
     await websocket.accept()
-    
-    # Validate token (manually, since Depends doesn't work directly with WebSocket)
-    if not token:
-        await websocket.close(code=1008, reason="Authentication required")
-        return
-    
     try:
-        user = supabase.auth.get_user(token.split("Bearer ")[1] if token.startswith("Bearer ") else token)
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        current_user = supabase.table("users").select("*").eq("id", user.user.id).single().execute().data
-    except Exception:
-        await websocket.close(code=1008, reason="Invalid token")
-        return
-    
-    print(f"User {current_user['email']} connected to interview {interview_id}")
-    
-    while True:
-        try:
-            data = await websocket.receive_text()
-            response = {"text": f"Processed response to: {data}"}  # Placeholder
-            await websocket.send_json(response)
-        except Exception as e:
-            print(f"WebSocket error: {str(e)}")
+        # Validate interview
+        interview = supabase.table("interviews").select("applicant_id").eq("id", interview_id).single().execute()
+        if not interview.data:
+            await websocket.send_json({"type": "error", "message": "Interview not found"})
             await websocket.close()
-            break
+            return
+
+        agent = InterviewAgent(applicant_id=interview.data["applicant_id"])
+        await agent.start_interview(websocket)
+
+    except WebSocketDisconnect:
+        print(f"WebSocket disconnected for interview {interview_id}")
+    except Exception as e:
+        await websocket.send_json({"type": "error", "message": f"Error: {str(e)}"})
+        await websocket.close()
+
+@app.post("/interviews/{interview_id}/tts")
+async def get_tts(interview_id: str, current_user: dict = Depends(get_current_user)):
+    """Generate TTS for the next question in the interview."""
+    try:
+        interview = supabase.table("interviews").select("applicant_id").eq("id", interview_id).single().execute()
+        if not interview.data:
+            raise HTTPException(status_code=404, detail="Interview not found")
+        
+        agent = InterviewAgent(applicant_id=interview.data["applicant_id"])
+        if agent.current_question_index >= len(agent.questions):
+            raise HTTPException(status_code=400, detail="No more questions")
+        
+        question = agent.questions[agent.current_question_index]
+        tts = gTTS(question)
+        path = f"tts_{interview_id}.mp3"
+        tts.save(path)
+        
+        with open(path, "rb") as f:
+            audio_data = f.read()
+        os.remove(path)
+        
+        return {
+            "question": question,
+            "audio": base64.b64encode(audio_data).decode("utf-8")
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating TTS: {str(e)}")
