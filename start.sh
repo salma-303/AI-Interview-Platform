@@ -3,7 +3,7 @@
 
 # Check if dependencies are installed
 if ! command -v python3 &> /dev/null; then
-    echo "Error: python3 is not installed. Please install it."
+    echo "Error: python is not installed. Please install it."
     exit 1
 fi
 
