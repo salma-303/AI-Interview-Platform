@@ -3,7 +3,7 @@ import datetime
 import asyncio
 import numpy as np
 import sounddevice as sd
-from TTS.api import TTS
+from gtts import gTTS
 import os
 from whisper_module import stream_transcribe_audio
 from evaluation_agent import EvaluationAgent
@@ -11,10 +11,9 @@ from logger_agent import LoggerAgent
 from database import supabase
 
 class InterviewAgent:
-    def __init__(self, applicant_id: str):
+    def __init__(self, applicant_id: str, interview_id: str = None):
         self.applicant_id = applicant_id
-        self.interview_id = str(uuid.uuid4())
-        self.tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=True)
+        self.interview_id = interview_id or str(uuid.uuid4())
         self.logger = LoggerAgent(self.interview_id)
         self.evaluator = EvaluationAgent()
         self.current_question_index = 0
@@ -54,7 +53,7 @@ class InterviewAgent:
             print(f"[InterviewAgent] Asking question {idx + 1}: {question}")
 
             # Generate TTS and send question
-            self.text_to_speech(question)
+            tts_path = self.text_to_speech(question)
             await websocket.send_json({"type": "question", "question": question, "index": idx + 1})
 
             # Stream audio and transcribe in real-time
@@ -79,9 +78,7 @@ class InterviewAgent:
         print(f"[InterviewAgent] Interview {self.interview_id} completed.")
 
     def text_to_speech(self, text):
-        
-        audio = self.tts.tts(text=text, speaker=None)
-        # Convert to float32 and play
-        audio_np = np.array(audio).astype(np.float32)
-        sd.play(audio_np, samplerate=22050)  # Default sample rate for most models
-        return
+        tts = gTTS(text)
+        path = f"tts_{self.interview_id}_{uuid.uuid4()}.mp3"
+        tts.save(path)
+        return path
