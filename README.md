@@ -20,9 +20,9 @@ You can export a docker image by running `dockerize.bat`
 
 
 
-1- 
+
 ```
-During an automated interview session, the system recorded the candidate's response inaccurately. Instead of capturing the actual spoken answer, the recorded audio output consisted solely of the repeated word "you", resulting in a failed evaluation.
+1- During an automated interview session, the system recorded the candidate's response inaccurately. Instead of capturing the actual spoken answer, the recorded audio output consisted solely of the repeated word "you", resulting in a failed evaluation.
 
 System Response:
 
@@ -51,18 +51,18 @@ Evaluation Impact: The system evaluated the response based on the incorrect audi
 - Score: 1/10
 ```
 
-2 - 
+ 
 ```
-Supabase authentication is not aligned with frontend javascript token, which disables log in entirely
+2 - Supabase authentication is not aligned with frontend javascript token, which disables log in entirely
 You can still run AI-Interview-Platform-backend/client.py to mimic client side
 ```
-3 - 
+
 ```
-Sign in page is not coordinated with the latest version of database
+3 - Sign in page is not coordinated with the latest version of database
 ```
-4 - 
+
 ```
-TTS is running both on server and client sides
+4 - TTS is running both on server and client sides
 ```
 
 **1. Overview**  
