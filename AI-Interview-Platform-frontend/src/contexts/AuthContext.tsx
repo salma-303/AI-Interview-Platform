@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -8,14 +7,13 @@ interface User {
   id: string;
   email: string;
   role: string;
-  name?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  registerUser: (email: string, password: string, name: string, role: string) => Promise<void>;
+  registerUser: (email: string, password: string, role: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -39,7 +37,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: userData.id,
         email: userData.email,
         role: userData.role,
-        name: userData.name,
       };
 
       localStorage.setItem('user', JSON.stringify(user));
@@ -47,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       toast({
         title: 'Login successful',
-        description: `Welcome back, ${user.name || 'User'}!`,
+        description: `Welcome back!`,
       });
 
       navigate(user.role === 'admin' ? '/dashboard-hr' : '/dashboard');
@@ -63,12 +60,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const registerUser = async (email: string, password: string, name: string, role: string) => {
+  const registerUser = async (email: string, password: string, role: string) => {
     try {
       setLoading(true);
 
       // Call signup
-      await signup({ email, password, role, name });
+      await signup({ email, password, role });
 
       // Auto-login after signup
       const signInData = await signin({ email, password });
@@ -80,7 +77,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: userData.id,
         email: userData.email,
         role: userData.role,
-        name: userData.name,
       };
 
       localStorage.setItem('user', JSON.stringify(user));
@@ -88,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       toast({
         title: 'Registration successful',
-        description: `Welcome, ${user.name || 'User'}!`,
+        description: `Welcome!`,
       });
 
       navigate(user.role === 'admin' ? '/dashboard-hr' : '/dashboard');
