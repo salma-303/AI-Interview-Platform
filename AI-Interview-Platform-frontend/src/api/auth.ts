@@ -9,7 +9,6 @@ interface UserSignUp {
   email: string;
   password: string;
   role: string;
-  name?: string;
 }
 
 interface SignInResponse {
@@ -25,24 +24,46 @@ interface User {
   id: string;
   email: string;
   role: string;
-  name?: string;
 }
 
 export const signin = async (user: UserSignIn): Promise<SignInResponse> => {
-  const response = await api.post<SignInResponse>('/signin', user);
-  return response.data;
+  try {
+    const response = await api.post<SignInResponse>('/signin', user);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Login failed: ${error.response?.data?.detail || error.message}`);
+    throw error;
+  }
 };
 
 export const signup = async (user: UserSignUp): Promise<SignUpResponse> => {
-  const response = await api.post<SignUpResponse>('/signup', user);
-  return response.data;
+  try {
+    const response = await api.post<SignUpResponse>('/signup', user);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Signup failed: ${error.response?.data?.detail || error.message}`);
+    throw error;
+  }
 };
 
 export const getCurrentUser = async (email: string): Promise<User> => {
-  const response = await api.get<User[]>('/users');
-  const user = response.data.find((u) => u.email === email);
-  if (!user) {
-    throw new Error('User not found');
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found in localStorage');
+    }
+    const response = await api.get<User[]>('/users', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const user = response.data.find((u) => u.email === email);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  } catch (error: any) {
+    console.error(`Get user failed: ${error.response?.data?.detail || error.message}`);
+    throw error;
   }
-  return user;
 };
