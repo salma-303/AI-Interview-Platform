@@ -143,11 +143,8 @@ Endpoints:
 
 **13. Frontend Overview**
 
-<img src="https://github.com/user-attachments/assets/bb28d08c-0a87-464b-876c-606def2e8d07" alt="description" width="300"/>
-
-<img src="https://github.com/user-attachments/assets/6036e3a0-0b51-4563-8d77-6f578535a219" alt="description" width="300"/>
-
-
+[Watch the video](./frontend.mp4)
+<video src="frontend.mp4" controls width="500"></video>
 
 
 **14. Backend Documentation**
