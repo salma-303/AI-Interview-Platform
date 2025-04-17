@@ -139,5 +139,10 @@ Endpoints:
 - Frontend: Streamlit.  
 - AI: Gemini, Whisper, CrewAI.  
 - DB: Supabase (PostgreSQL).  
-- Cloud: AWS.  
+- Cloud: GCP.
+
+**13. Frontend Overview**
+![image](https://github.com/user-attachments/assets/bb28d08c-0a87-464b-876c-606def2e8d07)
+![image](https://github.com/user-attachments/assets/6036e3a0-0b51-4563-8d77-6f578535a219)
+
 
