@@ -56,7 +56,7 @@ Evaluation Impact: The system evaluated the response based on the incorrect audi
 
 An error occurred in the **Live Interview API**, traced to the **Whisper model processing audio data** (likely in `whisper_module.py`). The exception raised was:  torch.OutOfMemoryError: CUDA out of memory
 
-Root Cause
+**Root Cause**
 
 The error indicates that the **GPU (2GB capacity)** ran out of memory during inference with the **Whisper model**. PyTorch attempted to allocate additional memory (~**3.65GB total**), which **exceeded the physical limits** of the available GPU.
 
