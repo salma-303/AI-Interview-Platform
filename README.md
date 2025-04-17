@@ -67,10 +67,10 @@ The error indicates that the **GPU (2GB capacity)** ran out of memory during inf
 # Documentation:
 **1. Overview**  
 The AI Interview Platform automates job applications and interviews using AI. It has:  
-- Frontend: Streamlit (user interface).  
+- Frontend: HTML , CSS ,Type script.  
 - Backend: FastAPI (APIs, auth).  
 - AI/ML: Gemini (CV analysis), Whisper (speech-to-text), TTS (text-to-speech).  
-- Database: Supabase (users, jobs, CVs, interviews).  
+- Database: Supabase (users, jobs, CVs, interviews , applicants).  
 - Cloud: AWS (deployment).  
 
 **2. Team Roles**  
@@ -84,9 +84,8 @@ The AI Interview Platform automates job applications and interviews using AI. It
 Repo: [github.com/salma-303/AI-Interview-Platform](https://github.com/salma-303/AI-Interview-Platform).  
 Branching strategy: Main branch + feature branches.  
 Folders:  
-- `backend/`: FastAPI (main.py, cv_parser.py, interview_manager.py).  
-- `frontend/`: Streamlit (app.py, pages).  
-- `database/`: Supabase config.  
+- `backend/`: FastAPI , database , AI files .  
+- `frontend/`: HTML , CSS ,Type script files .  
 - `deployment/`: AWS scripts.  
 
 **4. Workflow (CI/CD)**  
@@ -94,11 +93,91 @@ GitHub Actions: Super-Linter runs on push to check code quality.
 
 **5. Database Schema (Supabase)**  
 Tables:  
-- `users`: User emails, roles (user/admin).  
-- `jobs`: Job titles, descriptions.  
-- `applicants`: Links users to jobs.  
-- `cvs`: CV files (PDFs → JSON after parsing).  
-- `interviews`: Transcripts, scores.  
+---
+
+### `applicants`
+
+**Purpose:**  
+Stores information about individuals applying for jobs.
+
+**Description:**  
+Links users to specific job applications, tracking who applied for which job and when. Each applicant is uniquely identified and associated with a user and job via foreign keys.
+
+**Key Fields:**
+- `id`: Unique identifier for the applicant.  
+- `user_id`: References the user applying.  
+- `job_id`: References the job applied for.  
+- `created_at`: Timestamp of application creation.  
+
+---
+
+### `cvs`
+
+**Purpose:**  
+Manages uploaded CVs for applicants, including AI processing details.
+
+**Description:**  
+Stores CV file paths, processing status (`pending`, `completed`, or `failed`), extracted data, and AI-generated interview questions. Each CV is linked to an applicant, with a unique file path constraint to prevent duplicates.
+
+**Key Fields:**
+- `id`: Unique identifier for the CV.  
+- `applicant_id`: References the associated applicant.  
+- `file_path`: Location of the uploaded CV file.  
+- `processing_status`: Tracks AI processing state.  
+- `processed_data`: Stores extracted CV data in JSON format.  
+- `interview_questions`: AI-generated questions based on CV.  
+
+---
+
+### `interviews`
+
+**Purpose:**  
+Tracks AI-conducted interviews for applicants.
+
+**Description:**  
+Records interview details, including status (e.g., `Pending`), results, and transcripts. Each interview is tied to an applicant and job, enabling evaluation of candidate performance.
+
+**Key Fields:**
+- `id`: Unique identifier for the interview.  
+- `applicant_id`: References the applicant.  
+- `job_id`: References the job.  
+- `status`: Current state of the interview (e.g., `Pending`).  
+- `results`: AI-generated evaluation data in JSON format.  
+- `transcripts`: Stores interview transcripts in JSON format.  
+
+---
+
+### `jobs`
+
+**Purpose:**  
+Stores job postings created by recruiters.
+
+**Description:**  
+Contains job details like title, brief, requirements, and status (e.g., `Draft`). Constraints ensure reasonable length limits for text fields to maintain data quality.
+
+**Key Fields:**
+- `id`: Unique identifier for the job.  
+- `title`: Job title (max 100 characters).  
+- `brief`: Short job description (max 1000 characters).  
+- `requirements`: Detailed job requirements (max 2000 characters).  
+- `status`: Job posting status (e.g., `Draft`).  
+
+---
+
+### `users`
+
+**Purpose:**  
+Manages user accounts for recruiters and applicants.
+
+**Description:**  
+Stores user credentials, roles (e.g., `user`, `admin`), and registration timestamps. Email uniqueness and lowercase constraints ensure consistent identification.
+
+**Key Fields:**
+- `id`: Unique identifier for the user.  
+- `email`: Unique, lowercase email address.  
+- `password`: User password.  
+- `role`: User role (e.g., `user`, `admin`).  
+- `created_at`: Timestamp of user account creation.   
 
 **6. Authentication**  
 - JWT tokens for user sessions.  
