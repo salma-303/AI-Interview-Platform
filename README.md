@@ -8,7 +8,8 @@ The system automates CV parsing, question generation, response evaluation, and i
 1 - Use ```git clone https://github.com/salma-303/AI-Interview-Platform```
 
 2 - Install requirments using
-```npm install package.json
+```
+npm install package.json
 pip install -r requirements.txt
 ```
 3 - Run `start.sh`
