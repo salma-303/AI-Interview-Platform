@@ -142,7 +142,109 @@ Endpoints:
 - Cloud: GCP.
 
 **13. Frontend Overview**
-![image](https://github.com/user-attachments/assets/bb28d08c-0a87-464b-876c-606def2e8d07)
-![image](https://github.com/user-attachments/assets/6036e3a0-0b51-4563-8d77-6f578535a219)
+
+<img src="https://github.com/user-attachments/assets/bb28d08c-0a87-464b-876c-606def2e8d07" alt="description" width="300"/>
+
+<img src="https://github.com/user-attachments/assets/6036e3a0-0b51-4563-8d77-6f578535a219" alt="description" width="300"/>
+
+
+
+
+**14. Backend Documentation**
+
+The system is designed to automate the recruitment process by allowing users to:
+- Sign up and sign in using Supabase authentication.
+- Create, manage, and apply for job postings.
+- Upload and process CVs (PDF format) using Google Gemini for parsing and generating tailored interview questions.
+- Conduct live interviews via WebSocket with real-time audio transcription and evaluation.
+- Store and manage data (users, jobs, applicants, CVs, interviews) in Supabase.
+- Log and evaluate interview responses for sentiment, clarity, confidence, and relevance.
+
+The codebase is modular, with separate files handling specific functionalities such as CV processing, database interactions, interview simulation, and logging.
+
+## File Structure and Purpose
+1. **cv.py**: Handles CV processing and interview question generation using Google Gemini.
+2. **database.py**: Configures the Supabase client for database and storage operations.
+3. **interview_agent.py**: Manages the interview process, including question delivery, audio transcription, and response evaluation.
+4. **evaluation_agent.py**: Evaluates candidate responses for sentiment, clarity, confidence, and relevance.
+5. **interview_simulator.py**: Simulates a client-side interview experience with audio recording and playback.
+6. **logger_agent.py**: Logs interview transcripts, evaluations, and media for storage in Supabase.
+7. **models.py**: Defines Pydantic models for data validation (e.g., user signup, job creation).
+8. **main.py**: Defines FastAPI routes for user management, job management, CV processing, and live interviews.
+9. **auth.py**: Handles user authentication using Supabase JWT tokens.
+
+## Detailed File Documentation
+
+### 1. `cv.py`
+**Purpose**: Processes CV files (PDF or DOCX) to extract structured data and generate tailored interview questions using Google Gemini.
+
+**Key Functions**:
+- `extract_text_from_pdf(pdf_path)`: Extracts text from a PDF file using pdfplumber.
+- `extract_text_from_docx(docx_path)`: Extracts text from a DOCX file using docx2txt.
+- `parse_cv_with_gemini(cv_text)`: Uses Google Gemini to parse CV text into structured JSON with fields: name, email, phone, education, experience, skills.
+- `process_cv(file_path, file_type="pdf")`: Orchestrates CV text extraction and parsing, ensuring valid JSON output.
+- `generate_interview_questions(cv_data, job_title="software developer")`: Generates 5 tailored interview questions based on CV data and job title, focusing on coding skills, data structures, problem-solving, and tools.
+
+**Dependencies**:
+- fastapi, google.generativeai, pdfplumber, docx2txt, json, re
+
+**Notes**:
+- The Google API key is hardcoded (replace with environment variables in production).
+- The system assumes CVs are primarily in PDF format.
+- JSON parsing errors are handled with detailed error messages.
+
+### 2. `database.py`
+**Purpose**: Initializes the Supabase client for database and storage operations.
+
+**Key Components**:
+- Constants:
+  - `SUPABASE_URL`: Supabase project URL.
+  - `SUPABASE_KEY`: Anonymous API key for public access.
+- Client:
+  - `supabase`: A Client instance created using `create_client(SUPABASE_URL, SUPABASE_KEY)`.
+
+**Dependencies**:
+- supabase
+
+**Notes**:
+- The anon key is hardcoded (use environment variables in production).
+- The client is used across other modules for database operations (e.g., users, jobs, cvs, interviews tables).
+
+### 3. `interview_agent.py`
+**Purpose**: Manages the live interview process, including question delivery, audio transcription, response evaluation, and logging.
+
+**Key Components**:
+- **Class**: `InterviewAgent`
+  - Attributes:
+    - `applicant_id`: Unique identifier for the applicant.
+    - `interview_id`: Unique identifier for the interview (generated if not provided).
+    - `logger`: `LoggerAgent` instance for logging transcripts and evaluations.
+    - `evaluator`: `EvaluationAgent` instance for analyzing responses.
+    - `questions`: List of interview questions fetched from the `cvs` table.
+    - `parsed_info`: Processed CV data from the `cvs` table.
+    - `job_title`: Job title associated with the applicant’s job application.
+  - Methods:
+    - `__init__(applicant_id, interview_id)`: Initializes the agent, fetches applicant data, and creates an interview record in Supabase.
+    - `start_interview(websocket)`: Runs the interview loop, sending questions, streaming audio, transcribing responses, evaluating answers, and logging results.
+    - `text_to_speech(text)`: Generates TTS audio for questions using gTTS.
+
+**Dependencies**:
+- uuid, datetime, asyncio, numpy, sounddevice, gtts, whisper_module, evaluation_agent, logger_agent, database
+
+**Notes**:
+- Uses WebSocket for real-time communication with the client.
+- Assumes the `whisper_module` (not provided) handles audio transcription.
+- Interview status is updated to `Completed` upon finishing.
+
+### 4. `evaluation_agent.py`
+**Purpose**: Analyzes candidate responses during interviews using Google Gemini.
+
+**Key Components**:
+- **Class**: `EvaluationAgent` (inherits from `crewai.Agent`)
+  - Attributes:
+    - `name`: Agent name (`EvaluationAgent`).
+    - `role`: Role description (`Interview Evaluator`).
+    - `goal`: Objective
+
 
 
