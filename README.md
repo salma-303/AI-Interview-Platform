@@ -21,13 +21,13 @@ You can export a docker image by running `dockerize.bat`
 
 
 
-```
+
 1- During an automated interview session, the system recorded the candidate's response inaccurately. Instead of capturing the actual spoken answer, the recorded audio output consisted solely of the repeated word "you", resulting in a failed evaluation.
 
 System Response:
 
 json
-CopyEdit
+```
 
 {
   "type": "evaluation",
@@ -51,7 +51,7 @@ Evaluation Impact: The system evaluated the response based on the incorrect audi
 - Score: 1/10
 ```
 
-```
+
 2 - Backend Issue: GPU Memory Error during Live Interview API Execution
 
 An error occurred in the **Live Interview API**, traced to the **Whisper model processing audio data** (likely in `whisper_module.py`). The exception raised was:  torch.OutOfMemoryError: CUDA out of memory
@@ -59,11 +59,11 @@ An error occurred in the **Live Interview API**, traced to the **Whisper model p
 Root Cause
 
 The error indicates that the **GPU (2GB capacity)** ran out of memory during inference with the **Whisper model**. PyTorch attempted to allocate additional memory (~**3.65GB total**), which **exceeded the physical limits** of the available GPU.
-```
 
-```
+
 3 - not handling admin part
-```
+
+
 # Documentation:
 **1. Overview**  
 The AI Interview Platform automates job applications and interviews using AI. It has:  
