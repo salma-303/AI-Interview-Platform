@@ -51,18 +51,18 @@ Evaluation Impact: The system evaluated the response based on the incorrect audi
 - Score: 1/10
 ```
 
- 
 ```
-2 - Supabase authentication is not aligned with frontend javascript token, which disables log in entirely
-You can still run AI-Interview-Platform-backend/client.py to mimic client side
+2 - Backend Issue: GPU Memory Error during Live Interview API Execution
+
+An error occurred in the **Live Interview API**, traced to the **Whisper model processing audio data** (likely in `whisper_module.py`). The exception raised was:  torch.OutOfMemoryError: CUDA out of memory
+
+Root Cause
+
+The error indicates that the **GPU (2GB capacity)** ran out of memory during inference with the **Whisper model**. PyTorch attempted to allocate additional memory (~**3.65GB total**), which **exceeded the physical limits** of the available GPU.
 ```
 
 ```
-3 - Sign in page is not coordinated with the latest version of database
-```
-
-```
-4 - TTS is running both on server and client sides
+3 - not handling admin part
 ```
 # Documentation:
 **1. Overview**  
