@@ -3,6 +3,67 @@ The system automates CV parsing, question generation, response evaluation, and i
 
 **AI Interview Platform Documentation**  
 
+**Installation:**
+
+1 - Use ```git clone https://github.com/salma-303/AI-Interview-Platform```
+
+2 - Install requirments using
+```npm install package.json
+pip install -r requirements.txt
+```
+3 - Run `start.sh`
+
+You can export a docker image by running `dockerize.bat`
+
+**Bugs that need to be resolved**
+
+
+
+1- 
+```
+During an automated interview session, the system recorded the candidate's response inaccurately. Instead of capturing the actual spoken answer, the recorded audio output consisted solely of the repeated word "you", resulting in a failed evaluation.
+
+System Response:
+
+json
+CopyEdit
+
+{
+  "type": "evaluation",
+  "evaluation": {
+    "sentiment": "Neutral",
+    "clarity": 1,
+    "confidence": 1,
+    "relevance": "None",
+    "summary": "The answer consists entirely of the word 'you' repeated multiple times. It provides no information about the candidate's skills, experience, or thought process. Therefore, it's impossible to extract any meaningful points related to the AI2 position.",
+    "score": 1,
+    "timestamp": "2025-04-15 21:23:27.229889"
+  }
+}
+
+Audio Processing Issue: The recorded file (response_1744752201.wav) did not capture the candidate's actual speech and instead contained an audio loop or a corrupted input repeating the word "you".
+
+Evaluation Impact: The system evaluated the response based on the incorrect audio content, resulting in:
+- Clarity: 1/10
+- Confidence: 1/10
+- Relevance: None
+- Score: 1/10
+```
+
+2 - 
+```
+Supabase authentication is not aligned with frontend javascript token, which disables log in entirely
+You can still run AI-Interview-Platform-backend/client.py to mimic client side
+```
+3 - 
+```
+Sign in page is not coordinated with the latest version of database
+```
+4 - 
+```
+TTS is running both on server and client sides
+```
+
 **1. Overview**  
 The AI Interview Platform automates job applications and interviews using AI. It has:  
 - Frontend: Streamlit (user interface).  
