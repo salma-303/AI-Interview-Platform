@@ -92,10 +92,11 @@ Folders:
 GitHub Actions: Super-Linter runs on push to check code quality.  
 
 **5. Database Schema (Supabase)**  
-Tables:  
----
 
-### `applicants`
+Tables:  
+
+
+`applicants`
 
 **Purpose:**  
 Stores information about individuals applying for jobs.
@@ -109,9 +110,7 @@ Links users to specific job applications, tracking who applied for which job and
 - `job_id`: References the job applied for.  
 - `created_at`: Timestamp of application creation.  
 
----
-
-### `cvs`
+`cvs`
 
 **Purpose:**  
 Manages uploaded CVs for applicants, including AI processing details.
@@ -127,9 +126,9 @@ Stores CV file paths, processing status (`pending`, `completed`, or `failed`), e
 - `processed_data`: Stores extracted CV data in JSON format.  
 - `interview_questions`: AI-generated questions based on CV.  
 
----
 
-### `interviews`
+
+`interviews`
 
 **Purpose:**  
 Tracks AI-conducted interviews for applicants.
@@ -145,9 +144,8 @@ Records interview details, including status (e.g., `Pending`), results, and tran
 - `results`: AI-generated evaluation data in JSON format.  
 - `transcripts`: Stores interview transcripts in JSON format.  
 
----
 
-### `jobs`
+`jobs`
 
 **Purpose:**  
 Stores job postings created by recruiters.
@@ -162,9 +160,7 @@ Contains job details like title, brief, requirements, and status (e.g., `Draft`)
 - `requirements`: Detailed job requirements (max 2000 characters).  
 - `status`: Job posting status (e.g., `Draft`).  
 
----
-
-### `users`
+`users`
 
 **Purpose:**  
 Manages user accounts for recruiters and applicants.
