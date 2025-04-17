@@ -67,7 +67,7 @@ The error indicates that the **GPU (2GB capacity)** ran out of memory during inf
 # Documentation:
 **1. Overview**  
 The AI Interview Platform automates job applications and interviews using AI. It has:  
-- Frontend: HTML , CSS ,Type script.  
+- Frontend: React + TypeScript.  
 - Backend: FastAPI (APIs, auth).  
 - AI/ML: Gemini (CV analysis), Whisper (speech-to-text), TTS (text-to-speech).  
 - Database: Supabase (users, jobs, CVs, interviews , applicants).  
@@ -182,24 +182,69 @@ Stores user credentials, roles (e.g., `user`, `admin`), and registration timesta
 - Row-Level Security (RLS) enabled (users see only their data).  
 
 **7. Backend APIs (FastAPI)**  
-Endpoints:  
-- **Auth**: `/signup`, `/signin`.  
-- **Jobs**: CRUD (`/jobs`, `/jobs/{id}`).  
-- **Applicants**: Apply to jobs (`/jobs/{id}/applicants`).  
-- **CVs**: Upload/delete (`/applicants/{id}/cv`).  
-- **Interviews**: Start/fetch results (`/interviews/{id}`).  
+Endpoints:   
+- **Auth**: 
+  - `POST /signup`: Register a new user with email, password, and role.
+  - `POST /signin`: Authenticate a user and return a JWT access token.
+  - `GET /users`: Retrieve a list of all users (requires authentication).
+- **Jobs**: 
+  - `POST /jobs`: Create a new job posting (requires authentication).
+  - `GET /jobs`: Retrieve a list of all job postings.
+  - `GET /jobs/{job_id}`: Retrieve details of a specific job by ID.
+  - `PUT /jobs/{job_id}`: Update a specific job by ID (requires authentication).
+  - `DELETE /jobs/{job_id}`: Delete a specific job by ID (requires authentication).
+- **Applicants**: 
+  - `POST /jobs/{job_id}/applicants`: Apply to a job by linking a user to a job (requires authentication).
+  - `DELETE /jobs/{job_id}/applicants/{applicant_id}`: Remove an applicant from a job (requires authentication).
+  - `GET /applicants/{applicant_id}/history`: Retrieve interview history for an applicant (requires authentication).
+- **CVs**: 
+  - `POST /applicants/{applicant_id}/cv`: Upload and process a CV for an applicant (requires authentication).
+  - `PUT /applicants/{applicant_id}/cv/{cv_id}`: Update CV details by ID (requires authentication).
+  - `DELETE /applicants/{applicant_id}/cv/{cv_id}`: Delete a CV by ID (requires authentication).
+- **Interviews**: 
+  - `POST /applicants/{applicant_id}/interviews`: Schedule a new interview for an applicant (requires authentication).
+  - `GET /interviews/{interview_id}`: Retrieve details of a specific interview (requires authentication).
+  - `GET /applicants/{applicant_id}/interviews/results`: Fetch interview results for an applicant (requires authentication).
+  - `WEBSOCKET /interviews/{interview_id}/live`: Handle live interview interactions via WebSocket.
+  - `POST /interviews/{interview_id}/tts`: Generate text-to-speech for the next interview question (requires authentication).
 
 **8. AI/ML Flow**  
-- CV uploaded → FastAPI → parsed to JSON (Gemini) → stored in Supabase.  
-- Interview:  
-  1. User speaks → Whisper (STT) → text.  
-  2. CrewAI generates questions (uses CV JSON).  
-  3. AI scores answers → saves to Supabase.  
-  4. TTS converts AI replies to audio.  
+- **CV Processing**:  
+  - CV uploaded via FastAPI (`/applicants/{applicant_id}/cv`) → text extracted using `pdfplumber` for PDFs or `docx2txt` for DOCX (`cv.extract_text_from_pdf` or `cv.extract_text_from_docx`) → processed by Gemini model (`cv.parse_cv_with_gemini`) → parsed to JSON with keys: name, email, phone, education, experience, skills → stored in Supabase `cvs` table with processed data and generated interview questions.  
+- **Interview Process**:  
+  1. **Speech-to-Text (STT)**: User speaks → audio captured and transcribed in real-time using Whisper (`whisper_module.stream_transcribe_audio`) → transcribed text logged by `LoggerAgent`.  
+  2. **Question Generation**: Interview questions pre-generated from CV JSON and job title during CV upload using Gemini model (`cv.generate_interview_questions`), stored in Supabase `cvs` table, and retrieved by `InterviewAgent` for the interview.  
+  3. **Answer Evaluation**: Transcribed answers analyzed by `EvaluationAgent` using Gemini model → evaluated for sentiment, clarity, confidence, relevance, and quality → results logged by `LoggerAgent` and saved to Supabase `interviews` table.  
+  4. **Text-to-Speech (TTS)**: AI-generated questions converted to audio using gTTS (`InterviewAgent.text_to_speech`) → sent to client via WebSocket for real-time interaction.   
 
-**9. Frontend (Streamlit)**  
-- Pages: Signup, job listings, CV upload, interview.  
-- UI: Two screens (will add images later).  
+**9. Frontend (React + TypeScript)**  
+- **Pages**:  
+  - **Welcome (`/`) / Index**: Landing page with a minimal welcome message for new users, prompting navigation to SignIn or SignUp for unauthenticated users or displaying user info for authenticated users.  
+  - **SignIn (`/signin`)**: Form for user login with email and password, validated using Zod and react-hook-form, integrates with `/signin` API for authentication.  
+  - **SignUp (`/signup`)**: Registration form collecting name, email, password, and role, validated with Zod, calls `/signup` API and auto-logs in via `AuthContext`.  
+  - **Dashboard (`/dashboard`)**: User hub displaying personalized welcome, links to CV upload, interview, results, and job browsing with mock job listings.  
+  - **Dashboard HR (`/dashboard_hr`)**: HR interface for managing jobs, users, CVs, and interview settings (e.g., camera toggle), currently using mock data.  
+  - **Upload CV (`/upload-cv`)**: Drag-and-drop interface for PDF/DOC/DOCX CV uploads, validates file type/size, simulates upload and AI analysis, redirects to interview.  
+  - **Interview (`/interview`)**: AI-powered mock interview with predefined questions, text-based responses in a chat-like UI, simulated video/audio toggles, redirects to results.  
+  - **Results (`/results`)**: Displays interview performance with mock scores, skill-specific feedback, and per-question analysis using progress bars and accordions.  
+  - **NotFound**: 404 page for invalid routes with a link to return to the home page.  
+- **UI**:  
+  - Built with custom UI components (`@/components/ui/`) and icons from `lucide-react`.  
+  - Features drag-and-drop for CV upload, chat-like interface for interviews, progress bars and accordions for results, and toast notifications for user feedback.  
+  - Responsive design with providers for tooltips, notifications (`Toaster`, `Sonner`), and state management via `AuthContext` and `Tanstack Query`.  
+- **State Management**:  
+  - `AuthContext` manages global authentication state (user, login, logout, register) with token storage in `localStorage`.  
+  - `Tanstack Query` handles server-state and caching for API data fetching.  
+  - Local state (`useState`) used for page-specific logic (e.g., job selection, upload progress, interview messages).  
+- **API Integration**:  
+  - Authentication (`/signin`, `/signup`, `/users`) via Axios with a configured instance (`axiosfile.ts`).  
+  - Other features (CV upload, interview, results) currently use mock data, with planned integration for endpoints like `/applicants/{id}/cv` and `/interviews/{id}`.  
+- **Navigation**:  
+  - Managed by `React Router` with protected routes for authenticated pages (`/dashboard`, `/upload-cv`, `/interview`, `/results`, `/dashboard_hr`).  
+  - Role-based redirection (e.g., admins to `/dashboard_hr`, users to `/dashboard`).  
+- **Notes**:  
+  - Mock data used for interviews, job listings, and results; full API integration pending for non-auth features.  
+  - Repository: [https://github.com/salma-303/AI-Interview-Platform/tree/frontend](https://github.com/salma-303/AI-Interview-Platform/tree/frontend).    
 
 **10. Deployment**  
 - AWS: Hosts FastAPI/Streamlit.  
@@ -211,7 +256,7 @@ Endpoints:
 
 **12. Tech Stack**  
 - Backend: FastAPI (Python).  
-- Frontend: Streamlit.  
+- Frontend: React + TypeScript.  
 - AI: Gemini, Whisper, CrewAI.  
 - DB: Supabase (PostgreSQL).  
 - Cloud: GCP.
@@ -239,11 +284,10 @@ The codebase is modular, with separate files handling specific functionalities s
 2. **database.py**: Configures the Supabase client for database and storage operations.
 3. **interview_agent.py**: Manages the interview process, including question delivery, audio transcription, and response evaluation.
 4. **evaluation_agent.py**: Evaluates candidate responses for sentiment, clarity, confidence, and relevance.
-5. **interview_simulator.py**: Simulates a client-side interview experience with audio recording and playback.
-6. **logger_agent.py**: Logs interview transcripts, evaluations, and media for storage in Supabase.
-7. **models.py**: Defines Pydantic models for data validation (e.g., user signup, job creation).
-8. **main.py**: Defines FastAPI routes for user management, job management, CV processing, and live interviews.
-9. **auth.py**: Handles user authentication using Supabase JWT tokens.
+5. **logger_agent.py**: Logs interview transcripts, evaluations, and media for storage in Supabase.
+6. **models.py**: Defines Pydantic models for data validation (e.g., user signup, job creation).
+7. **main.py**: Defines FastAPI routes for user management, job management, CV processing, and live interviews.
+8. **auth.py**: Handles user authentication using Supabase JWT tokens.
 
 ## Detailed File Documentation
 
