@@ -13,7 +13,6 @@ import { useToast } from '@/components/ui/use-toast';
 import '@/components/ui/auth.css';
 
 const signUpSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }).min(1, { message: 'Email is required' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
   confirmPassword: z.string(),
@@ -24,7 +23,6 @@ const signUpSchema = z.object({
 });
 
 interface SignUpFormValues {
-  name: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -38,7 +36,6 @@ const SignUp: React.FC = () => {
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      name: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -49,12 +46,14 @@ const SignUp: React.FC = () => {
 
   const onSubmit = async (data: SignUpFormValues) => {
     try {
-      await registerUser(data.email, data.password, data.name, data.role);
+      console.log('Submitting sign-up with:', { email: data.email, role: data.role });
+      await registerUser(data.email, data.password, data.role);
       // Toast and navigation handled in AuthContext
     } catch (error: any) {
+      console.error('Sign-up error:', error.response?.data || error.message);
       toast({
         title: 'Registration failed',
-        description: error.response?.data?.detail || 'Could not create account',
+        description: error.response?.data?.detail || error.message || 'Could not create account',
         variant: 'destructive',
       });
     }
@@ -75,20 +74,6 @@ const SignUp: React.FC = () => {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your full name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="email"
@@ -138,7 +123,11 @@ const SignUp: React.FC = () => {
                     <FormItem>
                       <FormLabel>Role</FormLabel>
                       <FormControl>
-                        <select {...field} className="w-full p-2 border rounded">
+                        <select
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value as 'admin' | 'user')}
+                          className="w-full p-2 border rounded"
+                        >
                           <option value="user">Employee</option>
                           <option value="admin">HR Recruiter</option>
                         </select>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { signin } from '@/api/auth';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 import '@/components/ui/auth.css';
 
@@ -25,10 +26,9 @@ interface SignInFormValues {
 }
 
 const SignIn: React.FC = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const { login } = useAuth();
 
-  // Initialize form with explicit type
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -39,26 +39,16 @@ const SignIn: React.FC = () => {
   });
 
   const onSubmit = async (data: SignInFormValues) => {
-    // Runtime check for safety
-    if (!data.email || !data.password) {
-      toast({
-        title: 'Error',
-        description: 'Email and password are required.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     try {
-      const res = await signin(data); // Should now match UserSignIn
-      localStorage.setItem('token', res.access_token);
+      const res = await signin(data);
+      console.log(`Logged in as ${data.email}. Token: ${res.access_token.slice(0, 20)}...`);
+      await login(data.email, data.password);
       toast({
         title: 'Success',
         description: 'Signed in successfully!',
       });
-      navigate('/Dashboard');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Sign-in failed. Please try again.';
+      const errorMessage = error.response?.data?.detail || error.message || 'Sign-in failed. Please try again.';
       toast({
         title: 'Error',
         description: errorMessage,
