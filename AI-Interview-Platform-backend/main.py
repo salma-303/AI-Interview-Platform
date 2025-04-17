@@ -12,8 +12,18 @@ import asyncio
 import base64
 import os
 from gtts import gTTS
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080"],  # Frontend origin
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],  # Include OPTIONS
+    allow_headers=["Content-Type", "Accept", "Authorization"],
+)
 
 # Set up the FastAPI app with authentication endpoints
 # This module defines routes for user signup and signin, integrating with Supabase for authentication.
