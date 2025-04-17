@@ -1,6 +1,7 @@
 import json
 from crewai import Agent
 from cv import model  # Import Gemini model from cv.py
+import re
 
 class EvaluationAgent(Agent):
     def __init__(self, name="EvaluationAgent"):
@@ -27,7 +28,7 @@ class EvaluationAgent(Agent):
         - Summary of key points
         - Rating of answer from 1 to 10 based on quality and match with the job
 
-        Return in valid JSON format:
+        Return in valid JSON format without code fences or additional formatting:
         {{
             "sentiment": "...",
             "clarity": ...,
@@ -40,6 +41,15 @@ class EvaluationAgent(Agent):
         try:
             response = model.generate_content(prompt)
             cleaned_text = response.text.strip()
-            return json.loads(cleaned_text)
+            # Extract JSON object
+            match = re.match(r"(?s)^.*?({.*?}).*$", cleaned_text)
+            if match:
+                json_text = match.group(1)
+                try:
+                    return json.loads(json_text)
+                except json.JSONDecodeError:
+                    return {"error": "Invalid JSON format", "raw_response": cleaned_text}
+            else:
+                return {"error": "No valid JSON found", "raw_response": cleaned_text}
         except Exception as e:
             return {"error": str(e), "raw_response": response.text if response else "No response"}
