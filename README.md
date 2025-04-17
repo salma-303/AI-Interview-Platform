@@ -71,7 +71,7 @@ The AI Interview Platform automates job applications and interviews using AI. It
 - Backend: FastAPI (APIs, auth).  
 - AI/ML: Gemini (CV analysis), Whisper (speech-to-text), TTS (text-to-speech).  
 - Database: Supabase (users, jobs, CVs, interviews , applicants).  
-- Cloud: AWS (deployment).  
+- Cloud: GCP (deployment).  
 
 **2. Team Roles**  
 - Frontend: Ahmed Atef.  
@@ -86,7 +86,7 @@ Branching strategy: Main branch + feature branches.
 Folders:  
 - `backend/`: FastAPI , database , AI files .  
 - `frontend/`: HTML , CSS ,Type script files .  
-- `deployment/`: AWS scripts.  
+- `deployment/`: GCP scripts.  
 
 **4. Workflow (CI/CD)**  
 GitHub Actions: Super-Linter runs on push to check code quality.  
@@ -247,7 +247,7 @@ Endpoints:
   - Repository: [https://github.com/salma-303/AI-Interview-Platform/tree/frontend](https://github.com/salma-303/AI-Interview-Platform/tree/frontend).    
 
 **10. Deployment**  
-- AWS: Hosts FastAPI/Streamlit.  
+- Docker: Hosts FastAPI/Typescript.  
 - Supabase: Database + auth.  
 
 **11. Testing**  
