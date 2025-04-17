@@ -45,8 +45,8 @@ sleep 2
 # Navigate to frontend directory
 cd ../AI-Interview-Platform-frontend || { echo "Error: Frontend directory not found"; exit 1; }
 
-# Check frontend port (5173 for Vite)
-check_port 5173
+# Check frontend port (8080 for Vite)
+check_port 8080
 
 # Install frontend dependencies (if package.json exists)
 if [ -f package.json ]; then
