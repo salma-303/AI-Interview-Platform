@@ -261,10 +261,146 @@ Endpoints:
 - DB: Supabase (PostgreSQL).  
 - Cloud: GCP.
 
-**13. Frontend Overview**
+**13. Frontend Documentation**
 
 [Watch the video](./frontend.mp4)
 <video src="frontend.mp4" controls width="500"></video>
+
+The application is built with **React** and **TypeScript** to facilitate AI-driven mock interviews, CV uploads, result analysis, and HR management.
+
+---
+
+## 📁 Project Structure
+
+The frontend is organized under the `src/` directory:
+- `src/`: Main app entry point
+- `src/pages/`: All pages
+- `src/api/`: API interactions
+- `src/contexts/`: App-wide state (e.g., auth)
+
+Technologies used:
+- **React Router** – Navigation
+- **React Context** – Auth state
+- **Axios** – API requests
+- **Tanstack Query** – Data fetching
+- **UI** – Custom library `@/components/ui/`
+
+---
+
+## 📄 File Descriptions
+
+### `src/App.tsx`
+- **Purpose:** Sets up routing, providers (auth, toast, data fetching)
+- **Routing:** `/`, `/signup`, `/login`, `/dashboard`, `/upload-cv`, `/interview`, `/results`, `/dashboard_hr`
+- **Providers:** `AuthProvider`, `QueryClientProvider`, `TooltipProvider`, `Toaster`, `Sonner`
+- **Usage:** Main entry file
+
+---
+
+### `src/api/axiosfile.ts`
+- **Purpose:** Sets up Axios instance
+- **Base URL:** `http://127.0.0.1:8000/`
+- **Usage:** Shared Axios instance across API files
+
+---
+
+### `src/api/auth.ts`
+- **Purpose:** Auth API functions
+- `signin`, `signup`, `getCurrentUser`
+- **Interfaces:** Type-safe types for API responses
+- **Used in:** `SignIn.tsx`, `SignUp.tsx`, `AuthContext.tsx`
+
+---
+
+### `src/contexts/AuthContext.tsx`
+- **Purpose:** Global auth state and handlers
+- `login`, `registerUser`, `logout`
+- **State:** `user`, `loading`
+- **Navigation:** Role-based redirects
+- **Usage:** Wraps entire app via `AuthProvider`
+
+---
+
+### `src/pages/Index.tsx`
+- **Purpose:** Default landing page
+- **Details:** Minimal welcome, no logic
+
+---
+
+### `src/pages/Dashboard.tsx`
+- **Purpose:** Candidate dashboard
+- **Features:** Upload CV, start interview, view results
+- **State:** Tracks selected job
+- **Auth:** Uses `useAuth`
+
+---
+
+### `src/pages/Dashboard_HR.tsx`
+- **Purpose:** HR tools (mock only)
+- **Features:** Add/delete jobs/users, toggle interview settings
+- **Note:** Uses local state, no real API
+
+---
+
+### `src/pages/Interview.tsx`
+- **Purpose:** AI mock interview
+- **Features:** Chat UI, toggle video/audio, end session
+- **Note:** Uses mock questions
+
+---
+
+### `src/pages/NotFound.tsx`
+- **Purpose:** 404 page
+- **Details:** Logs invalid routes, shows message + link home
+
+---
+
+### `src/pages/Results.tsx`
+- **Purpose:** Interview feedback
+- **Data:** Mock scores, skills, per-question feedback
+- **UI:** Uses `Accordion`, `Progress` bars
+
+---
+
+### `src/pages/SignIn.tsx`
+- **Purpose:** Sign-in form
+- **Validation:** `zod`, `react-hook-form`
+- **Actions:** Calls `signin`, handles error/success via toasts
+
+---
+
+### `src/pages/SignUp.tsx`
+- **Purpose:** Registration form
+- **Validation:** Name, email, password, confirm, role
+- **Action:** Calls `registerUser`, redirects by role
+
+---
+
+### `src/pages/Welcome.tsx`
+- **Purpose:** Welcome screen based on auth state
+- **Details:** Authenticated = email + logout, else SignIn/SignUp buttons
+
+---
+
+### `src/pages/UploadCV.tsx`
+- **Purpose:** Upload CV
+- **Features:** Drag/drop or input, validate file type/size, simulate analysis
+- **Note:** No real API logic
+
+---
+
+## 📝 Notes
+
+- **Mock Data:** Interviews, results, and job listings are mocked.
+- **Auth:** Handled via `AuthContext` with token stored in `localStorage`.
+- **UI:** Components from `@/components/ui/`, icons from `lucide-react`.
+- **Routing & Providers:** Centralized in `App.tsx`.
+
+---
+
+## 🔗 Repository
+
+[https://github.com/salma-303/AI-Interview-Platform/tree/frontend](https://github.com/salma-303/AI-Interview-Platform/tree/frontend)
 
 
 **14. Backend Documentation**
