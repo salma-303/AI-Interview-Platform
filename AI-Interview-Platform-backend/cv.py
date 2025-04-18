@@ -9,7 +9,7 @@ import json
 # app = FastAPI()
 
 # Configure the API key (hardcoded for simplicity; use env vars in production)
-GOOGLE_API_KEY = "AIzaSyBLcu1rXpEYMRvGPdKvzjiGigFOnk-q4tA"  # Replace or use os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = "GOOGLE_API_KEY"  # Replace or use os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
