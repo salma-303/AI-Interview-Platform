@@ -1,7 +1,7 @@
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: win-64
-_openmp_mutex==4.5=2_gnu
+
 absl-py==2.2.0==pypi_0
 accelerate==1.2.1==pypi_0
 aiohappyeyeballs==2.4.4==pypi_0
